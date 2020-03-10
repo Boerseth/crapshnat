@@ -16,21 +16,15 @@ def array_to_image(array):
 
 def get_coordinates(point, triangle):
     p0, p1, p2 = triangle
-    p = point - p0
-    v1 = p1 - p0
-    v2 = p2 - p0
-    det = v1[0]*v2[1] - v2[0]*v1[1]
-    s = (v2[1]*p[0] - v2[0]*p[1]) / det
-    t = (v1[0]*p[1] - v1[1]*p[0]) / det
+    p, v1, v2 = (point - p0, p1 - p0, p2 - p0)
+    determinant = v1[0]*v2[1] - v2[0]*v1[1]
+    s = (v2[1]*p[0] - v2[0]*p[1]) / determinant
+    t = (- v1[1]*p[0] + v1[0]*p[1]) / determinant
     return s, t
 
 
 def is_point_in_triangle(s, t):
     return (0 <= s <= 1) and (0 <= t <= 1) and (s+t <= 1)
-
-
-def weight(a, b, w):
-    return a*(1-w) + b*w
 
 
 def hsl_from_rgb(r, g, b):
@@ -77,6 +71,10 @@ def combine_pixels(r, g, b, r0, b0, g0, rho_l, alpha):
     return np.array([r0, g0, b0])*(1-alpha) + np.array(rgb_from_hsl(h0, s, min(0.99, rho_l*l)))*alpha
 
 
+def weight(a, b, w):
+    return a*(1 - w) + b*w
+
+
 def get_pixel(im, tri, s, t, pixel0, rho_l):
     p0, p1, p2 = tri
     point = p0 + s*(p1-p0) + t*(p2-p0)
@@ -86,7 +84,7 @@ def get_pixel(im, tri, s, t, pixel0, rho_l):
     pixel = weight(
         weight(im[x,y], im[x+1,y], dx),
         weight(im[x,y+1], im[x+1,y+1], dx),
-        dy
+        dy,
     )
     r, g, b = pixel[0], pixel[1], pixel[2]
     r0, g0, b0= pixel0[0], pixel0[1], pixel0[2]
@@ -113,18 +111,9 @@ def substitute_in_triangle(im1, tri1, im2, tri2, rho_l):
     return im1
 
 
-def get_key_points_from_landmarks(landmarks):
-    chin = landmarks["chin"]
-    nose_bridge = landmarks["nose_bridge"]
-    left_eyebrow = landmarks["left_eyebrow"]
-    right_eyebrow = landmarks["right_eyebrow"]
-    center = nose_bridge[3]
-    key_points = chin + right_eyebrow[::-1] + left_eyebrow[::-1]
-    # key_points = (
-    #         list(chin[i] for i in [0, 4, 6, 8, 10, 12, 16])
-    #         + list(right_eyebrow[i] for i in [4, 2, 0])
-    #         + list(left_eyebrow[i] for i in [4, 2, 0])
-    # )
+def get_key_points_from_landmarks(marks):
+    center = marks["nose_bridge"][3]
+    key_points = marks["chin"] + marks["right_eyebrow"][::-1] + marks["left_eyebrow"][::-1]
     return np.array([center[1], center[0]]), [np.array([kp[1], kp[0]]) for kp in key_points]
 
 

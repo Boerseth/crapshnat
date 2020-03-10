@@ -54,16 +54,15 @@ def get_boundaries(tri):
     return x_min, x_max, y_min, y_max
 
 
-alpha = 5.0
+alpha = 10.0
 def g(z):
     return np.arctan(alpha*z)/np.pi + 0.5
 
 
 def smosh(s, t):
-    return (
-        1.5*s*(1-g((s+t)-0.7)) + s*g((s+t)-0.7), 
-        1.5*t*(1-g((s+t)-0.7)) + t*g((s+t)-0.7)
-    )
+    z = s + t
+    scale = 0.6*z*(1-g(z - 0.7)) + z*g(z - 0.7)
+    return scale*s, scale*t
 
 
 def smosh_triangle(im1, tri1, im2, tri2):
